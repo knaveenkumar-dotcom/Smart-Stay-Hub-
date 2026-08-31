@@ -381,6 +381,6 @@ app.get('/api/dashboard/:hostel_id', (req, res) => {
   res.json({ totalStudents, totalRooms, vacantBeds, openMaintenance, pendingFees, activeVisitors, studentsInside });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Smart PG/Hostel backend running at http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Smart PG/Hostel backend running on port ${PORT}`);
 });
