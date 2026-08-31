@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Admin Dashboard</title>
+<style>
+  :root {
+    --ink: #1a1d29;
+    --slate: #4a5068;
+    --paper: #f6f5f2;
+    --card: #ffffff;
+    --line: #e4e2dc;
+    --accent: #c25e2e;
+    --accent-soft: #f3e2d3;
+    --good: #2f7d5e;
+    --good-soft: #dcefe5;
+    --warn: #b8862b;
+    --warn-soft: #f6e9d3;
+    --bad: #a8412f;
+    --bad-soft: #f5ded9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  header {
+    background: var(--ink);
+    color: #fff;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  header .brand {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  header .brand span { color: var(--accent); }
+  header select, header input {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+  }
+  nav {
+    display: flex;
+    gap: 4px;
+    padding: 10px 28px 0;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+  }
+  nav button {
+    background: none;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--slate);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+  nav button.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+  main { padding: 24px 28px; max-width: 1200px; margin: 0 auto; }
+  .grid-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .stat-card .num { font-size: 28px; font-weight: 700; }
+  .stat-card .label { font-size: 12px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.5px; }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .panel h2 { margin-top: 0; font-size: 17px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .row input, .row select, .row textarea {
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 140px;
+  }
+  button.action {
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.action.accent { background: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--slate); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  .badge {
+    padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .badge.in, .badge.paid, .badge.resolved { background: var(--good-soft); color: var(--good); }
+  .badge.out, .badge.pending, .badge.open { background: var(--warn-soft); color: var(--warn); }
+  .badge.overdue { background: var(--bad-soft); color: var(--bad); }
+  .empty { color: var(--slate); font-size: 14px; padding: 20px 0; text-align: center; }
+  .hint { font-size: 12px; color: var(--slate); margin-top: -8px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Hostel<span>OS</span></div>
+  <div>
+    <label style="font-size:13px; margin-right:6px;">API base:</label>
+    <input id="apiBase" value="http://localhost:4000" style="width:200px;">
+    <label style="font-size:13px; margin:0 6px;">Hostel ID:</label>
+    <input id="hostelId" value="1" style="width:50px;">
+  </div>
+</header>
+
+<nav id="tabs">
+  <button data-tab="overview" class="active">Overview</button>
+  <button data-tab="attendance">Attendance</button>
+  <button data-tab="sensors">Sensors</button>
+  <button data-tab="visitors">Visitors</button>
+  <button data-tab="maintenance">Maintenance</button>
+  <button data-tab="fees">Fee Reminders</button>
+  <button data-tab="rooms">Room Allocation</button>
+</nav>
+
+<main>
+
+  <!-- OVERVIEW -->
+  <section id="tab-overview">
+    <div class="grid-summary" id="summaryCards"></div>
+    <div class="panel">
+      <h2>Quick Setup</h2>
+      <p class="hint">First time? Add a hostel, then rooms, then students (with RFID tag) before using other tabs.</p>
+      <div class="row">
+        <input id="newHostelName" placeholder="Hostel name">
+        <input id="newHostelOwner" placeholder="Owner name">
+        <input id="newHostelPhone" placeholder="Owner phone">
+        <button class="action accent" onclick="createHostel()">+ Add Hostel</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ATTENDANCE -->
+  <section id="tab-attendance" style="display:none;">
+    <div class="panel">
+      <h2>Simulate RFID Scan (for testing without hardware)</h2>
+      <div class="row">
+        <input id="simRfid" placeholder="RFID tag (e.g. A1B2C3D4)">
+        <input id="simDevice" placeholder="Device ID" value="ESP32-GATE-01">
+        <button class="action accent" onclick="simulateScan()">Simulate Tap</button>
+      </div>
+      <p class="hint">In production this call comes automatically from the ESP32 firmware.</p>
+    </div>
+    <div class="panel">
+      <h2>Today's Attendance Log</h2>
+      <table>
+        <thead><tr><th>Time</th><th>Student</th><th>Event</th><th>Device</th></tr></thead>
+        <tbody id="attendanceRows"></tbody>
+      </table>
+      <div class="empty" id="attendanceEmpty" style="display:none;">No attendance records yet.</div>
+    </div>
+  </section>
+
+  <!-- SENSORS -->
+  <section id="tab-sensors" style="display:none;">
+    <div class="panel">
+      <h2>Live Sensor Readings</h2>
+      <p class="hint">One card per ESP32 device. Updates when you reload this tab — refresh every ~10s while testing.</p>
+      <div class="grid-summary" id="sensorCards"></div>
+      <div class="empty" id="sensorEmpty" style="display:none;">No sensor data yet — check ESP32 is powered and posting to /api/sensors/reading.</div>
+    </div>
+    <div class="panel">
+      <h2>Recent Alerts</h2>
+      <table>
+        <thead><tr><th>Time</th><th>Device</th><th>Gas (raw)</th><th>Water %</th><th>Door</th><th>Motion</th></tr></thead>
+        <tbody id="sensorHistoryRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- VISITORS -->
+  <section id="tab-visitors" style="display:none;">
+    <div class="panel">
+      <h2>Check In a Visitor</h2>
+      <div class="row">
+        <input id="visName" placeholder="Visitor name">
+        <input id="visPhone" placeholder="Visitor phone">
+        <input id="visStudentId" placeholder="Visiting Student ID">
+        <input id="visPurpose" placeholder="Purpose">
+      </div>
+      <div class="row">
+        <input id="visIdType" placeholder="ID proof type (Aadhar/License)">
+        <input id="visIdNum" placeholder="ID proof number">
+        <button class="action accent" onclick="checkinVisitor()">Check In</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Visitor Log</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Visiting</th><th>Check In</th><th>Check Out</th><th></th></tr></thead>
+        <tbody id="visitorRows"></tbody>
+      </table>
+      <div class="empty" id="visitorEmpty" style="display:none;">No visitors logged yet.</div>
+    </div>
+  </section>
+
+  <!-- MAINTENANCE -->
+  <section id="tab-maintenance" style="display:none;">
+    <div class="panel">
+      <h2>Raise a Maintenance Request</h2>
+      <div class="row">
+        <input id="mtStudentId" placeholder="Student ID">
+        <input id="mtRoomId" placeholder="Room ID">
+        <select id="mtCategory">
+          <option>electrical</option><option>plumbing</option><option>cleaning</option>
+          <option>wifi</option><option>other</option>
+        </select>
+        <select id="mtPriority">
+          <option value="low">low</option><option value="medium" selected>medium</option><option value="high">high</option>
+        </select>
+      </div>
+      <div class="row">
+        <textarea id="mtDesc" placeholder="Describe the issue" rows="2"></textarea>
+        <button class="action accent" onclick="raiseMaintenance()">Submit Request</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Open Requests</h2>
+      <table>
+        <thead><tr><th>Category</th><th>Description</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+        <tbody id="maintenanceRows"></tbody>
+      </table>
+      <div class="empty" id="maintenanceEmpty" style="display:none;">No maintenance requests.</div>
+    </div>
+  </section>
+
+  <!-- FEES -->
+  <section id="tab-fees" style="display:none;">
+    <div class="panel">
+      <h2>Create a Fee Entry</h2>
+      <div class="row">
+        <input id="feeStudentId" placeholder="Student ID">
+        <input id="feeAmount" placeholder="Amount (₹)" type="number">
+        <input id="feeMonth" placeholder="Month (YYYY-MM)" value="2026-07">
+        <button class="action accent" onclick="createFee()">Add Fee</button>
+      </div>
+      <button class="action" onclick="sendReminders()">📩 Send Reminders Now (Pending + Overdue)</button>
+    </div>
+    <div class="panel">
+      <h2>Fee Status</h2>
+      <table>
+        <thead><tr><th>Student</th><th>Month</th><th>Amount</th><th>Status</th><th>Reminders Sent</th><th></th></tr></thead>
+        <tbody id="feeRows"></tbody>
+      </table>
+      <div class="empty" id="feeEmpty" style="display:none;">No fee records yet.</div>
+    </div>
+  </section>
+
+  <!-- ROOMS -->
+  <section id="tab-rooms" style="display:none;">
+    <div class="panel">
+      <h2>Add a Room</h2>
+      <div class="row">
+        <input id="roomNumber" placeholder="Room number (e.g. 201)">
+        <input id="roomCapacity" placeholder="Capacity" type="number" value="2">
+        <input id="roomFloor" placeholder="Floor" type="number" value="2">
+        <input id="roomRent" placeholder="Monthly rent (₹)" type="number">
+        <button class="action accent" onclick="createRoom()">+ Add Room</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Allocate / Vacate Student</h2>
+      <div class="row">
+        <input id="allocRoomId" placeholder="Room ID">
+        <input id="allocStudentId" placeholder="Student ID">
+        <button class="action accent" onclick="allocateStudent()">Allocate</button>
+        <button class="action" onclick="vacateStudent()">Vacate</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Room Occupancy</h2>
+      <table>
+        <thead><tr><th>Room #</th><th>Floor</th><th>Type</th><th>Capacity</th><th>Occupied</th><th>Vacant</th><th>Rent</th></tr></thead>
+        <tbody id="roomRows"></tbody>
+      </table>
+      <div class="empty" id="roomEmpty" style="display:none;">No rooms added yet.</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function apiBase() { return $('apiBase').value.replace(/\/$/, ''); }
+function hostelId() { return $('hostelId').value; }
+
+async function api(path, opts = {}) {
+  const res = await fetch(apiBase() + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Request failed');
+  }
+  return res.json();
+}
+
+// ---------- Tab switching ----------
+document.querySelectorAll('#tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
+    $('tab-' + btn.dataset.tab).style.display = 'block';
+    loadAll();
+  });
+});
+
+// ---------- Overview ----------
+async function createHostel() {
+  try {
+    const r = await api('/api/hostels', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: $('newHostelName').value,
+        owner_name: $('newHostelOwner').value,
+        owner_phone: $('newHostelPhone').value
+      })
+    });
+    alert('Hostel created with ID: ' + r.id + ' — set this as Hostel ID above.');
+  } catch (e) { alert(e.message); }
+}
+
+async function loadOverview() {
+  try {
+    const s = await api(`/api/dashboard/${hostelId()}`);
+    $('summaryCards').innerHTML = `
+      <div class="stat-card"><div class="num">${s.totalStudents}</div><div class="label">Students</div></div>
+      <div class="stat-card"><div class="num">${s.studentsInside}</div><div class="label">Inside Now</div></div>
+      <div class="stat-card"><div class="num">${s.vacantBeds ?? 0}</div><div class="label">Vacant Beds</div></div>
+      <div class="stat-card"><div class="num">${s.activeVisitors}</div><div class="label">Active Visitors</div></div>
+      <div class="stat-card"><div class="num">${s.openMaintenance}</div><div class="label">Open Tickets</div></div>
+      <div class="stat-card"><div class="num">${s.pendingFees}</div><div class="label">Pending Fees</div></div>
+    `;
+  } catch (e) { console.error(e); }
+}
+
+// ---------- Attendance ----------
+async function simulateScan() {
+  try {
+    const r = await api('/api/attendance/scan', {
+      method: 'POST',
+      body: JSON.stringify({ rfid_tag: $('simRfid').value, device_id: $('simDevice').value, hostel_id: Number(hostelId()) })
+    });
+    alert(r.message);
+    loadAttendance();
+  } catch (e) { alert(e.message); }
+}
+
+async function loadAttendance() {
+  try {
+    const rows = await api(`/api/attendance/${hostelId()}`);
+    $('attendanceEmpty').style.display = rows.length ? 'none' : 'block';
+    $('attendanceRows').innerHTML = rows.map(r => `
+      <tr><td>${new Date(r.timestamp).toLocaleString()}</td><td>${r.student_name}</td>
+      <td><span class="badge ${r.event_type}">${r.event_type.toUpperCase()}</span></td><td>${r.device_id || '-'}</td></tr>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+// ---------- Sensors ----------
+const GAS_ALERT = 1800;
+const WATER_LOW = 20;
+
+async function loadSensors() {
+  try {
+    const latest = await api(`/api/sensors/${hostelId()}/latest`);
+    $('sensorEmpty').style.display = latest.length ? 'none' : 'block';
+    $('sensorCards').innerHTML = latest.map(r => {
+      const gasHigh = r.gas_raw > GAS_ALERT;
+      const waterLow = r.water_level_pct !== null && r.water_level_pct < WATER_LOW;
+      const doorOpen = r.door_closed === 0;
+      return `
+      <div class="stat-card">
+        <div class="label" style="margin-bottom:6px;">${r.device_id}</div>
+        <div style="font-size:13px; line-height:1.9;">
+          🌡️ ${r.temperature_c ?? '-'}°C &nbsp; 💧 ${r.humidity_pct ?? '-'}%<br>
+          🔥 Gas: <b style="color:${gasHigh ? 'var(--bad)' : 'inherit'}">${r.gas_raw ?? '-'}</b> ${gasHigh ? '⚠️' : ''}<br>
+          🚰 Tank: <b style="color:${waterLow ? 'var(--warn)' : 'inherit'}">${r.water_level_pct ?? '-'}%</b> ${waterLow ? '⚠️' : ''}<br>
+          🚪 Door: <b style="color:${doorOpen ? 'var(--warn)' : 'inherit'}">${doorOpen ? 'OPEN' : 'Closed'}</b><br>
+          🚶 Motion: ${r.motion_detected ? 'Detected' : 'None'}
+        </div>
+        <div style="font-size:11px; color:var(--slate); margin-top:6px;">${new Date(r.timestamp).toLocaleString()}</div>
+      </div>`;
+    }).join('');
+
+    const history = await api(`/api/sensors/${hostelId()}/history?limit=20`);
+    $('sensorHistoryRows').innerHTML = history.map(r => `
+      <tr><td>${new Date(r.timestamp).toLocaleTimeString()}</td><td>${r.device_id}</td>
+      <td>${r.gas_raw ?? '-'}</td><td>${r.water_level_pct ?? '-'}</td>
+      <td>${r.door_closed ? 'Closed' : 'Open'}</td><td>${r.motion_detected ? 'Yes' : 'No'}</td></tr>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+// ---------- Visitors ----------
+async function checkinVisitor() {
+  try {
+    await api('/api/visitors/checkin', {
+      method: 'POST',
+      body: JSON.stringify({
+        hostel_id: Number(hostelId()), visitor_name: $('visName').value, visitor_phone: $('visPhone').value,
+        visiting_student_id: Number($('visStudentId').value), purpose: $('visPurpose').value,
+        id_proof_type: $('visIdType').value, id_proof_number: $('visIdNum').value
+      })
+    });
+    loadVisitors();
+  } catch (e) { alert(e.message); }
+}
+
+async function checkoutVisitor(id) {
+  await api(`/api/visitors/${id}/checkout`, { method: 'POST' });
+  loadVisitors();
+}
+
+async function loadVisitors() {
+  try {
+    const rows = await api(`/api/visitors/${hostelId()}`);
+    $('visitorEmpty').style.display = rows.length ? 'none' : 'block';
+    $('visitorRows').innerHTML = rows.map(r => `
+      <tr><td>${r.visitor_name}</td><td>${r.student_name || '-'}</td>
+      <td>${new Date(r.check_in).toLocaleString()}</td>
+      <td>${r.check_out ? new Date(r.check_out).toLocaleString() : '-'}</td>
+      <td>${r.check_out ? '' : `<button class="action" onclick="checkoutVisitor(${r.id})">Check Out</button>`}</td></tr>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+// ---------- Maintenance ----------
+async function raiseMaintenance() {
+  try {
+    await api('/api/maintenance', {
+      method: 'POST',
+      body: JSON.stringify({
+        hostel_id: Number(hostelId()), student_id: Number($('mtStudentId').value), room_id: Number($('mtRoomId').value),
+        category: $('mtCategory').value, description: $('mtDesc').value, priority: $('mtPriority').value
+      })
+    });
+    loadMaintenance();
+  } catch (e) { alert(e.message); }
+}
+
+async function updateMaintenanceStatus(id, status) {
+  await api(`/api/maintenance/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  loadMaintenance();
+}
+
+async function loadMaintenance() {
+  try {
+    const rows = await api(`/api/maintenance/${hostelId()}`);
+    $('maintenanceEmpty').style.display = rows.length ? 'none' : 'block';
+    $('maintenanceRows').innerHTML = rows.map(r => `
+      <tr><td>${r.category}</td><td>${r.description || '-'}</td><td>${r.priority}</td>
+      <td><span class="badge ${r.status}">${r.status.replace('_',' ')}</span></td>
+      <td>${r.status !== 'resolved' ? `<button class="action" onclick="updateMaintenanceStatus(${r.id}, 'resolved')">Mark Resolved</button>` : ''}</td></tr>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+// ---------- Fees ----------
+async function createFee() {
+  try {
+    await api('/api/fees', {
+      method: 'POST',
+      body: JSON.stringify({
+        hostel_id: Number(hostelId()), student_id: Number($('feeStudentId').value),
+        amount: Number($('feeAmount').value), month: $('feeMonth').value
+      })
+    });
+    loadFees();
+  } catch (e) { alert(e.message); }
+}
+
+async function markPaid(id) {
+  await api(`/api/fees/${id}/pay`, { method: 'PATCH' });
+  loadFees();
+}
+
+async function sendReminders() {
+  const r = await api('/api/fees/send-reminders', { method: 'POST' });
+  alert(`Reminders sent: ${r.remindersSent}`);
+  loadFees();
+}
+
+async function loadFees() {
+  try {
+    const rows = await api(`/api/fees/${hostelId()}`);
+    $('feeEmpty').style.display = rows.length ? 'none' : 'block';
+    $('feeRows').innerHTML = rows.map(r => `
+      <tr><td>${r.student_name}</td><td>${r.month}</td><td>₹${r.amount}</td>
+      <td><span class="badge ${r.status}">${r.status}</span></td><td>${r.reminder_sent_count}</td>
+      <td>${r.status !== 'paid' ? `<button class="action" onclick="markPaid(${r.id})">Mark Paid</button>` : ''}</td></tr>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+// ---------- Rooms ----------
+async function createRoom() {
+  try {
+    await api('/api/rooms', {
+      method: 'POST',
+      body: JSON.stringify({
+        hostel_id: Number(hostelId()), room_number: $('roomNumber').value,
+        capacity: Number($('roomCapacity').value), floor: Number($('roomFloor').value),
+        monthly_rent: Number($('roomRent').value)
+      })
+    });
+    loadRooms();
+  } catch (e) { alert(e.message); }
+}
+
+async function allocateStudent() {
+  try {
+    await api(`/api/rooms/${$('allocRoomId').value}/allocate`, {
+      method: 'POST', body: JSON.stringify({ student_id: Number($('allocStudentId').value) })
+    });
+    loadRooms();
+  } catch (e) { alert(e.message); }
+}
+
+async function vacateStudent() {
+  try {
+    await api(`/api/rooms/${$('allocRoomId').value}/vacate`, {
+      method: 'POST', body: JSON.stringify({ student_id: Number($('allocStudentId').value) })
+    });
+    loadRooms();
+  } catch (e) { alert(e.message); }
+}
+
+async function loadRooms() {
+  try {
+    const rows = await api(`/api/rooms/${hostelId()}`);
+    $('roomEmpty').style.display = rows.length ? 'none' : 'block';
+    $('roomRows').innerHTML = rows.map(r => `
+      <tr><td>${r.room_number}</td><td>${r.floor ?? '-'}</td><td>${r.room_type}</td>
+      <td>${r.capacity}</td><td>${r.occupied}</td><td>${r.vacancy}</td><td>₹${r.monthly_rent ?? '-'}</td></tr>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+function loadAll() {
+  loadOverview();
+  loadAttendance();
+  loadSensors();
+  loadVisitors();
+  loadMaintenance();
+  loadFees();
+  loadRooms();
+}
+
+loadAll();
+</script>
+
+</body>
+</html>
