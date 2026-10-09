@@ -1,0 +1,600 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Stay Hub — Smart PG Hostel Management System</title>
+<style>
+:root{
+  --bg:#070b1c; --txt:#eef2ff; --mut:#a9b3d6;
+  --ok:#3ef2a8; --warn:#ffcf5a; --bad:#ff5d73; --acc:#7aa2ff; --acc2:#c084fc;
+  --glass:linear-gradient(135deg,rgba(255,255,255,.20),rgba(255,255,255,.05) 55%,rgba(255,255,255,.12));
+  --edge:rgba(255,255,255,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+/* ---------- liquid background ---------- */
+.blobs{position:fixed;inset:0;z-index:-1;overflow:hidden;filter:saturate(1.3)}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.75;animation:float 22s ease-in-out infinite}
+.b1{width:520px;height:520px;background:#3b5bff;top:-120px;left:-100px}
+.b2{width:460px;height:460px;background:#b44bff;bottom:-140px;right:-80px;animation-delay:-7s}
+.b3{width:380px;height:380px;background:#00d4c8;top:38%;left:42%;animation-delay:-13s;opacity:.5}
+.b4{width:300px;height:300px;background:#ff5fa2;top:8%;right:18%;animation-delay:-4s;opacity:.45}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1) rotate(0)}25%{transform:translate(90px,60px) scale(1.15) rotate(20deg)}50%{transform:translate(-40px,130px) scale(.92) rotate(-15deg)}75%{transform:translate(-110px,-30px) scale(1.1) rotate(10deg)}}
+/* ---------- glass ---------- */
+.glass{position:relative;background:var(--glass);border:1px solid var(--edge);border-radius:26px;
+  backdrop-filter:blur(26px) saturate(190%);-webkit-backdrop-filter:blur(26px) saturate(190%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.65),inset 0 -14px 30px rgba(255,255,255,.05),inset 0 0 22px rgba(255,255,255,.06),0 24px 50px rgba(0,0,0,.38),0 4px 10px rgba(0,0,0,.25);
+  transform-style:preserve-3d;transition:transform .25s ease,box-shadow .25s ease}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(260px circle at var(--mx,30%) var(--my,0%),rgba(255,255,255,.30),transparent 60%);opacity:.7;mix-blend-mode:soft-light}
+.glass::after{content:"";position:absolute;left:8%;right:8%;top:0;height:36%;border-radius:0 0 60% 60%/0 0 100% 100%;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),transparent);opacity:.6}
+.tilt:hover{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8),inset 0 -14px 30px rgba(255,255,255,.07),0 34px 60px rgba(0,0,0,.45)}
+/* ---------- layout ---------- */
+.app{display:flex;gap:18px;padding:18px;min-height:100vh}
+.side{width:244px;flex:0 0 244px;position:sticky;top:18px;height:calc(100vh - 36px);padding:18px 12px;display:flex;flex-direction:column;overflow:hidden}
+.brand{display:flex;gap:12px;align-items:center;padding:4px 10px 16px}
+.logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,#7aa2ff,#c084fc);box-shadow:inset 0 2px 4px rgba(255,255,255,.6),0 6px 18px rgba(122,162,255,.5)}
+.brand b{letter-spacing:.14em;font-size:13px;display:block}.brand small{color:var(--mut);font-size:11px}
+nav{overflow-y:auto;flex:1;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+nav a{display:flex;align-items:center;gap:11px;padding:10px 14px;margin:3px 0;border-radius:16px;color:var(--mut);text-decoration:none;font-size:14px;cursor:pointer;transition:.2s;border:1px solid transparent}
+nav a i{font-style:normal;width:20px;text-align:center;font-size:16px}
+nav a:hover{color:#fff;background:rgba(255,255,255,.08)}
+nav a.on{color:#fff;background:linear-gradient(135deg,rgba(122,162,255,.4),rgba(192,132,252,.28));border-color:rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 20px rgba(80,90,255,.25)}
+nav a .cnt{margin-left:auto;background:var(--bad);color:#fff;font-size:11px;padding:1px 8px;border-radius:99px}
+.side .hw{font-size:10.5px;color:var(--mut);padding:10px 10px 0;line-height:1.6;border-top:1px solid rgba(255,255,255,.12)}
+main{flex:1;min-width:0}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;margin-bottom:18px}
+.top h1{font-size:21px}.top p{font-size:12px;color:var(--mut)}
+.top .sp{flex:1}
+.menu{display:none;background:none;border:0;color:#fff;font-size:24px;cursor:pointer}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:99px;font-size:12px;font-weight:600;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 1.6s infinite}
+.dot.red{background:var(--bad);box-shadow:0 0 10px var(--bad)}.dot.yel{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+@keyframes pulse{50%{opacity:.4;transform:scale(.8)}}
+section.page{display:none;animation:in .45s ease}
+section.page.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.grid{display:grid;gap:18px}
+.g6{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.card{padding:20px 22px;margin-bottom:18px}
+.grid>.card{margin-bottom:0}
+h2{font-size:17px;margin-bottom:3px}h2+.sub{color:var(--mut);font-size:12.5px;margin-bottom:14px}
+.tile{padding:18px 20px}
+.tile .lbl{font-size:12px;color:var(--mut);display:flex;justify-content:space-between;align-items:center}
+.tile .val{font-size:34px;font-weight:700;margin:8px 0 2px;text-shadow:0 2px 14px rgba(122,162,255,.5);font-variant-numeric:tabular-nums}
+.tile .val small{font-size:14px;color:var(--mut);font-weight:500;margin-left:4px}
+.tile .st{font-size:12px;font-weight:700}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.bar{height:9px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:10px;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.bar>div{height:100%;border-radius:9px;background:linear-gradient(90deg,#4aa8ff,#7affd9);transition:width .8s ease;box-shadow:0 0 14px rgba(100,200,255,.7)}
+/* pipeline */
+.pipe{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 16px}
+.step{flex:1;min-width:104px;text-align:center;padding:14px 8px;border-radius:20px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);transition:.4s;font-size:12px;color:var(--mut)}
+.step .ic{font-size:26px;display:block;margin-bottom:5px;filter:grayscale(1) opacity(.6);transition:.4s}
+.step.go{background:rgba(62,242,168,.18);border-color:rgba(62,242,168,.6);color:#fff;box-shadow:0 0 24px rgba(62,242,168,.35),inset 0 1px 0 rgba(255,255,255,.5)}
+.step.go .ic{filter:none;transform:scale(1.2)}
+.step.no{background:rgba(255,93,115,.2);border-color:rgba(255,93,115,.7);color:#fff;box-shadow:0 0 26px rgba(255,93,115,.5)}
+.step.no .ic{filter:none;transform:scale(1.2)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kv div{padding:11px 14px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+.kv small{display:block;color:var(--mut);font-size:11px}.kv b{font-size:15px}
+.verdict{margin-top:14px;padding:14px 18px;border-radius:18px;font-weight:700;text-align:center;font-size:15px;background:rgba(62,242,168,.15);border:1px solid rgba(62,242,168,.5)}
+.verdict.bad{background:rgba(255,93,115,.2);border-color:rgba(255,93,115,.7);animation:shake .5s 3}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* table, lists */
+.tw{overflow:auto;max-height:340px;border-radius:16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{position:sticky;top:0;background:rgba(20,26,60,.75);backdrop-filter:blur(10px);text-align:left;padding:10px 12px;color:var(--mut);font-weight:600;font-size:12px}
+td{padding:9px 12px;border-top:1px solid rgba(255,255,255,.08)}
+.tag{padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:700}
+.tag.ok{background:rgba(62,242,168,.18)}.tag.bad{background:rgba(255,93,115,.22)}.tag.warn{background:rgba(255,207,90,.2)}
+.list{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.item{padding:10px 14px;border-radius:15px;font-size:13px;background:rgba(255,255,255,.07);border-left:4px solid var(--acc);display:flex;gap:10px;justify-content:space-between}
+.item.bad{border-color:var(--bad)}.item.warn{border-color:var(--warn)}.item.ok{border-color:var(--ok)}
+.item time{color:var(--mut);font-size:11.5px;white-space:nowrap}
+canvas{width:100%;height:230px;display:block}
+/* buttons */
+.btn{cursor:pointer;color:#fff;font-weight:600;font-size:13px;padding:10px 18px;border-radius:15px;border:1px solid rgba(255,255,255,.35);background:linear-gradient(135deg,rgba(255,255,255,.26),rgba(255,255,255,.06));box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 8px 18px rgba(0,0,0,.3);transition:.2s;backdrop-filter:blur(10px)}
+.btn:hover{transform:translateY(-2px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8),0 12px 24px rgba(0,0,0,.4)}
+.btn:active{transform:translateY(1px)}
+.btn.red{background:linear-gradient(135deg,rgba(255,93,115,.55),rgba(255,93,115,.18))}
+.btn.grn{background:linear-gradient(135deg,rgba(62,242,168,.5),rgba(62,242,168,.12))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,select{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:13px;padding:9px 13px;font-size:13px;outline:none;backdrop-filter:blur(8px)}
+select option{color:#000}
+.sw{position:relative;width:60px;height:32px;border-radius:99px;cursor:pointer;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 3px 8px rgba(0,0,0,.4);transition:.3s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff,#cfd8ff 60%,#9aa8e8);box-shadow:0 3px 8px rgba(0,0,0,.5);transition:.3s}
+.sw.on{background:linear-gradient(135deg,#3ef2a8,#2fb4ff);box-shadow:inset 0 3px 8px rgba(0,0,0,.2),0 0 18px rgba(62,242,168,.55)}
+.sw.on::after{left:31px}
+.dev{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px}
+.dev b{display:block}.dev small{color:var(--mut)}
+.mod{padding:18px 20px}.mod .e{font-size:30px}.mod b{display:block;margin:6px 0 3px}.mod small{color:var(--mut);line-height:1.5;display:block}
+/* alarm overlay */
+#alarm{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:rgba(255,30,60,.18);backdrop-filter:blur(6px);animation:flash .6s infinite alternate}
+#alarm.on{display:grid}
+@keyframes flash{to{background:rgba(255,30,60,.4)}}
+#alarm .glass{padding:34px 44px;text-align:center;max-width:90vw}
+#alarm .big{font-size:60px}
+#alarm h3{font-size:24px;margin:6px 0}
+code,pre{font-family:Consolas,monospace;font-size:12px;background:rgba(0,0,0,.35);border-radius:12px;padding:10px 14px;display:block;overflow:auto;white-space:pre-wrap}
+@media(max-width:900px){
+  .menu{display:block}
+  .side{position:fixed;z-index:40;left:12px;top:12px;height:calc(100vh - 24px);transform:translateX(-120%);transition:.35s}
+  .side.open{transform:none}
+  .app{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
+
+<div id="alarm"><div class="glass"><div class="big">🚨</div><h3>TAILGATING DETECTED</h3>
+<p id="alarmTxt" style="color:var(--mut);margin-bottom:16px"></p>
+<button class="btn red" onclick="stopBuzzer()">🔕 Silence Buzzer</button></div></div>
+
+<div class="app">
+<aside class="side glass" id="side">
+  <div class="brand"><div class="logo">SH</div><div><b>SMART STAY HUB</b><small>PG Hostel Management</small></div></div>
+  <nav id="nav"></nav>
+  <div class="hw">ESP32 · RC522 · DHT22 · MQ-2<br>HC-SR04 · PIR · Reed · MQTT HiveMQ</div>
+</aside>
+
+<main>
+<div class="top glass">
+  <button class="menu" onclick="document.getElementById('side').classList.toggle('open')">☰</button>
+  <div><h1 id="ttl">Dashboard Overview</h1><p id="tsub">Live system snapshot</p></div>
+  <span class="sp"></span>
+  <span class="pill"><span class="dot" id="espDot"></span><span id="espTxt">ESP32 ONLINE</span></span>
+  <span class="pill" id="modePill">⚙ SIMULATION</span>
+  <span class="pill">↻ <span id="ago">0s</span> ago</span>
+</div>
+
+<!-- DASHBOARD -->
+<section class="page on" id="p-dash">
+  <div class="grid g6" style="margin-bottom:18px">
+    <div class="glass tile tilt"><div class="lbl">🌡 Temperature</div><div class="val"><span id="d-t">--</span><small>°C</small></div><div class="st" id="d-ts"></div></div>
+    <div class="glass tile tilt"><div class="lbl">💧 Humidity</div><div class="val"><span id="d-h">--</span><small>%</small></div><div class="st" id="d-hs"></div></div>
+    <div class="glass tile tilt"><div class="lbl">🔥 Gas / Smoke</div><div class="val"><span id="d-g">--</span><small>ppm</small></div><div class="st" id="d-gs"></div></div>
+    <div class="glass tile tilt"><div class="lbl">🛢 Water Tank</div><div class="val"><span id="d-w">--</span><small>%</small></div><div class="bar"><div id="d-wb"></div></div></div>
+    <div class="glass tile tilt"><div class="lbl">🚪 Door</div><div class="val" style="font-size:24px;margin-top:14px" id="d-door">--</div><div class="st" id="d-doort"></div></div>
+    <div class="glass tile tilt"><div class="lbl">👥 Present</div><div class="val"><span id="d-p">--</span><small>/ 48</small></div><div class="st ok" id="d-pe"></div></div>
+  </div>
+
+  <div class="glass card">
+    <h2>RFID + PIR Entry Verification</h2><div class="sub">One RFID tap → corridor PIR checks 1 or 2 persons → buzzer on tailgating</div>
+    <div class="pipe" id="pipe">
+      <div class="step" id="s1"><span class="ic">💳</span>RFID Scan</div>
+      <div class="step" id="s2"><span class="ic">🚪</span>Door Opens</div>
+      <div class="step" id="s3"><span class="ic">👁</span>PIR Corridor</div>
+      <div class="step" id="s4"><span class="ic">👥</span>Person Count</div>
+      <div class="step" id="s5"><span class="ic">✅</span>Verification</div>
+    </div>
+    <div class="kv">
+      <div><small>RFID User</small><b id="v-u">—</b></div>
+      <div><small>RFID ID</small><b id="v-id">—</b></div>
+      <div><small>Scan Time</small><b id="v-t">—</b></div>
+      <div><small>People Detected</small><b id="v-n">—</b></div>
+      <div><small>Buzzer</small><b id="v-b">OFF</b></div>
+      <div><small>Next auto scan</small><b id="v-next">—</b></div>
+    </div>
+    <div class="verdict" id="verdict">Waiting for RFID scan…</div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn grn" onclick="scan(1)">▶ Simulate Single Entry</button>
+      <button class="btn red" onclick="scan(2)">▶ Simulate Double Entry (Tailgating)</button>
+      <button class="btn" onclick="scan()">🎲 Random Scan</button>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div class="glass card"><h2>Live Trend</h2><div class="sub">Temperature · Humidity · Gas (auto-updating)</div><canvas id="c-live"></canvas></div>
+    <div class="glass card"><h2>Recent Alerts</h2><div class="sub">Latest critical events</div><div class="list" id="l-alerts-mini"></div></div>
+  </div>
+</section>
+
+<!-- RFID ATTENDANCE -->
+<section class="page" id="p-att">
+  <div class="grid g4" style="margin-bottom:18px">
+    <div class="glass tile tilt"><div class="lbl">Total Residents</div><div class="val">48</div></div>
+    <div class="glass tile tilt"><div class="lbl">Present</div><div class="val ok" id="a-p">--</div></div>
+    <div class="glass tile tilt"><div class="lbl">Absent</div><div class="val warn" id="a-a">--</div></div>
+    <div class="glass tile tilt"><div class="lbl">Entries / Exits Today</div><div class="val"><span id="a-e">0</span> / <span id="a-x">0</span></div></div>
+  </div>
+  <div class="glass card"><h2>Attendance Log</h2><div class="sub">RC522 reader · resident identification</div>
+    <div class="row" style="margin-bottom:12px"><select id="f-dir" onchange="renderAtt()"><option value="">Entry/Exit: All</option><option>Entry</option><option>Exit</option></select>
+    <select id="f-st" onchange="renderAtt()"><option value="">Status: All</option><option>Authorized</option><option>Unauthorized</option></select></div>
+    <div class="tw"><table><thead><tr><th>Name</th><th>RFID ID</th><th>Date</th><th>Time</th><th>Entry/Exit</th><th>Status</th></tr></thead><tbody id="t-att"></tbody></table></div></div>
+</section>
+
+<!-- ENTRY VERIFICATION -->
+<section class="page" id="p-ver">
+  <div class="grid g4" style="margin-bottom:18px">
+    <div class="glass tile tilt"><div class="lbl">Total RFID Scans</div><div class="val" id="e-tot">0</div></div>
+    <div class="glass tile tilt"><div class="lbl">Single Entries</div><div class="val ok" id="e-s">0</div></div>
+    <div class="glass tile tilt"><div class="lbl">Double Entries</div><div class="val bad" id="e-d">0</div></div>
+    <div class="glass tile tilt"><div class="lbl">Tailgating Alerts</div><div class="val warn" id="e-a">0</div></div>
+  </div>
+  <div class="glass card"><h2>Entry Verification History</h2><div class="sub">PIR confirms single vs. tailgated entry</div>
+    <div class="tw"><table><thead><tr><th>Time</th><th>RFID User</th><th>RFID ID</th><th>Persons Detected</th><th>Result</th></tr></thead><tbody id="t-ver"></tbody></table></div></div>
+</section>
+
+<!-- ENVIRONMENT -->
+<section class="page" id="p-env">
+  <div class="grid g2" style="margin-bottom:18px">
+    <div class="glass card tilt"><h2>Temperature & Humidity</h2><div class="sub">DHT22 sensor · updated every 2s</div>
+      <div class="kv"><div><small>Temperature</small><b style="font-size:30px"><span id="n-t">--</span> °C</b><br><span class="st" id="n-ts"></span></div>
+      <div><small>Humidity</small><b style="font-size:30px"><span id="n-h">--</span> %</b><br><span class="st" id="n-hs"></span></div></div></div>
+    <div class="glass card tilt"><h2>Gas / Smoke Safety</h2><div class="sub">MQ-2 sensor</div>
+      <div class="kv"><div><small>Gas Level</small><b style="font-size:30px"><span id="n-g">--</span> ppm</b><br><span class="st" id="n-gs"></span></div>
+      <div><small>Active alerts</small><b id="n-ga">None</b></div></div>
+      <div class="row" style="margin-top:14px"><button class="btn red" onclick="gasLeak()">🧪 Simulate Gas Leak</button></div></div>
+  </div>
+  <div class="glass card"><h2>24-Hour Trend</h2><div class="sub">Temperature · Humidity</div><canvas id="c-env"></canvas></div>
+</section>
+
+<!-- WATER -->
+<section class="page" id="p-wat">
+  <div class="grid g2">
+    <div class="glass card"><h2>Water Tank Monitor</h2><div class="sub">HC-SR04 ultrasonic sensor</div>
+      <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+        <div id="tank" style="width:130px;height:190px;border-radius:26px;border:2px solid rgba(255,255,255,.4);position:relative;overflow:hidden;background:rgba(255,255,255,.06);box-shadow:inset 0 0 30px rgba(255,255,255,.12)">
+          <div id="tankFill" style="position:absolute;left:0;right:0;bottom:0;height:78%;background:linear-gradient(180deg,#6fd6ff,#2a6dff);transition:height 1s;box-shadow:0 0 30px #4aa8ff"></div>
+          <div id="tankPct" style="position:absolute;inset:0;display:grid;place-items:center;font-size:28px;font-weight:800;text-shadow:0 2px 8px #000">78%</div>
+        </div>
+        <div class="kv" style="flex:1;min-width:200px"><div><small>Distance to Surface</small><b id="w-d">--</b></div><div><small>Tank Status</small><b id="w-s">--</b></div><div><small>Pump</small><b id="w-p">AUTO</b></div><div><small>Last Reading</small><b id="w-l">just now</b></div></div>
+      </div></div>
+    <div class="glass card"><h2>Water Level Trend</h2><div class="sub">Auto-refilling when below 20%</div><canvas id="c-wat"></canvas></div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section class="page" id="p-sec">
+  <div class="grid g2">
+    <div class="glass card"><h2>Door Status</h2><div class="sub">Magnetic reed sensor · door frame</div>
+      <div style="font-size:60px;text-align:center" id="s-ic">🟢</div>
+      <div style="text-align:center;font-size:20px;font-weight:700" id="s-door">DOOR CLOSED</div>
+      <div class="kv" style="margin-top:14px"><div><small>Last Opened</small><b id="s-lo">—</b></div><div><small>Last Closed</small><b id="s-lc">—</b></div><div><small>Corridor PIR</small><b id="s-pir">No motion</b></div></div></div>
+    <div class="glass card"><h2>Security Overview</h2><div class="sub">Priority: Double Entry → Gas Danger → Door Left Open → Unauthorized RFID</div>
+      <div class="list" id="l-sec"></div></div>
+  </div>
+</section>
+
+<!-- DEVICE CONTROL -->
+<section class="page" id="p-dev">
+  <p class="sub" style="margin:0 4px 14px;color:var(--mut);font-size:13px">Commands are sent to ESP32 via MQTT (in simulation they just update the UI)</p>
+  <div class="grid g2" id="devs"></div>
+  <div class="glass card" style="margin-top:18px"><h2>⚡ Energy Saving (PIR)</h2><div class="sub">Light & fan auto-OFF when corridor has no motion for 40 seconds</div>
+    <div class="row"><div class="sw on" id="sw-auto" onclick="toggleAuto()"></div><span id="autoTxt">Auto energy saving ON</span></div></div>
+</section>
+
+<!-- ANALYTICS -->
+<section class="page" id="p-ana">
+  <div class="row" style="margin-bottom:18px"><select id="rng" onchange="drawAna()"><option value="12">Last 1 Hour</option><option value="24" selected>Last 24 Hours</option><option value="7">Last 7 Days</option><option value="30">Last 30 Days</option></select></div>
+  <div class="grid g2">
+    <div class="glass card"><h2>Temperature & Humidity</h2><canvas id="a1"></canvas></div>
+    <div class="glass card"><h2>Gas & Water Level</h2><canvas id="a2"></canvas></div>
+    <div class="glass card"><h2>RFID Entries (Single / Double)</h2><canvas id="a3"></canvas></div>
+    <div class="glass card"><h2>Device Usage Hours (AC / Light / Fan)</h2><canvas id="a4"></canvas></div>
+  </div>
+</section>
+
+<!-- ALERTS -->
+<section class="page" id="p-alr">
+  <div class="glass card"><h2>Alerts & Notifications</h2><div class="sub">All monitored critical events</div>
+    <div class="row" style="margin-bottom:12px"><button class="btn" onclick="S.alerts=[];renderLists()">Clear all</button></div>
+    <div class="list" id="l-alerts" style="max-height:520px"></div></div>
+</section>
+
+<!-- LOG -->
+<section class="page" id="p-log">
+  <div class="glass card"><h2>Activity Log</h2><div class="sub">Real-time system event stream</div>
+    <div class="list" id="l-log" style="max-height:560px"></div></div>
+</section>
+
+<!-- SYSTEM -->
+<section class="page" id="p-sys">
+  <div class="grid g4" style="margin-bottom:18px">
+    <div class="glass tile tilt"><div class="lbl">ESP32</div><div class="val" style="font-size:22px" id="y-e">🟢 ONLINE</div></div>
+    <div class="glass tile tilt"><div class="lbl">Wi-Fi</div><div class="val" style="font-size:22px">🟢 CONNECTED</div></div>
+    <div class="glass tile tilt"><div class="lbl">MQTT HiveMQ</div><div class="val" style="font-size:22px" id="y-m">🟡 SIMULATED</div></div>
+    <div class="glass tile tilt"><div class="lbl">System Uptime</div><div class="val" style="font-size:22px" id="y-u">0s</div></div>
+  </div>
+  <div class="glass card"><h2>🔌 Connect Real ESP32 (MQTT)</h2><div class="sub">Websocket broker: broker.hivemq.com:8884 — dashboard auto-switches from simulation to live data</div>
+    <div class="row"><input id="topic" value="smartstay/hub1" style="min-width:220px"><button class="btn grn" onclick="connectMQTT()">Connect</button><button class="btn" onclick="disconnectMQTT()">Back to Simulation</button></div>
+    <p style="margin:14px 0 8px;color:var(--mut);font-size:12.5px">ESP32 should publish JSON to these topics (change “smartstay/hub1” to your own unique name):</p>
+<pre>smartstay/hub1/sensors  →  {"temp":28.5,"hum":65,"gas":180,"dist":12,"door":0,"pir":1}
+smartstay/hub1/entry    →  {"name":"Arun Kumar","uid":"A1F3C21B","persons":1}   // persons = PIR count after RFID tap
+smartstay/hub1/cmd      ←  {"device":"fan","state":1}   // dashboard commands (ac, light, fan, pump, buzzer)</pre></div>
+  <div class="glass card"><h2>Connection Logs</h2><div class="list" id="l-conn" style="max-height:220px"></div></div>
+</section>
+
+<!-- ABOUT -->
+<section class="page" id="p-abt">
+  <div class="glass card"><h2>SMART STAY HUB</h2>
+    <p style="color:var(--mut);line-height:1.7;margin-top:8px">An IoT-based Smart PG Hostel Management System combining RFID attendance, PIR-based tailgating detection, environmental and safety monitoring, and remote appliance control — built on ESP32, MQTT (HiveMQ), and a live web dashboard.</p>
+    <p style="margin-top:14px;line-height:1.7"><b>Problem:</b> Hostel management is manual.<br><b>Solution:</b> Digital attendance · Visitor management · Maintenance requests · Fee reminders · Room allocation.<br><b>Startup model:</b> Monthly subscription per hostel.</p></div>
+  <h2 style="margin:6px 4px 12px">Sensors & Modules</h2>
+  <div class="grid g6">
+    <div class="glass mod tilt"><div class="e">💳</div><b>RFID RC522</b><small>Resident attendance & entry authorisation</small></div>
+    <div class="glass mod tilt"><div class="e">👁</div><b>PIR HC-SR501</b><small>Counts persons after a tap — 1 = OK, 2 = tailgating → buzzer. Also drives energy saving</small></div>
+    <div class="glass mod tilt"><div class="e">🌡</div><b>DHT22</b><small>Room temperature & humidity, damp alerts</small></div>
+    <div class="glass mod tilt"><div class="e">🔥</div><b>MQ-2</b><small>Gas / smoke detection, fire safety</small></div>
+    <div class="glass mod tilt"><div class="e">🛢</div><b>HC-SR04</b><small>Overhead tank water level, “tank empty” alert</small></div>
+    <div class="glass mod tilt"><div class="e">🧲</div><b>Reed Switch</b><small>Main gate / room door open-close</small></div>
+    <div class="glass mod tilt"><div class="e">🔔</div><b>Buzzer</b><small>Local alarm for tailgating, gas & door-left-open</small></div>
+    <div class="glass mod tilt"><div class="e">📡</div><b>ESP32</b><small>Wi-Fi + MQTT bridge to this dashboard</small></div>
+  </div>
+</section>
+</main>
+</div>
+
+<script>
+/* ================== helpers ================== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const pad=n=>String(n).padStart(2,'0');
+const nowT=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())};
+const nowD=()=>new Date().toLocaleDateString('en-GB');
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ================== state ================== */
+const RES=[['Arun Kumar','A1F3C21B'],['Karthik R','B7D4E92A'],['Vignesh S','C3A81F55'],['Manoj P','D9E2B073'],['Suresh M','E5F1A4C8'],['Prakash V','F2C6D819'],['Dinesh K','1A9B7E3D'],['Ramesh T','2B8C4F60']];
+const S={temp:28.5,hum:65,gas:180,tank:78,door:false,pir:false,
+  present:new Set([0,1,2,3]),base:27,entries:0,exits:0,scans:0,single:0,dbl:0,tail:0,
+  buzzer:false,alerts:[],log:[],att:[],ver:[],sec:[],
+  dev:{ac:false,light:true,fan:true,pump:false},auto:true,idle:0,busy:false,
+  lastOpen:'—',lastClose:'—',lastUpdate:Date.now(),t0:Date.now(),live:false,client:null,
+  hist:{t:[],h:[],g:[],w:[]},nextScan:6,doorOpenTicks:0};
+const NAMES=['ac','light','fan','pump','buzzer'];
+const DEVMETA={ac:['❄','Air Conditioner','Room cooling'],light:['💡','Corridor Light','Controlled by PIR'],fan:['🌀','Ceiling Fan','Controlled by PIR'],pump:['🚰','Water Pump','Manual / auto refill'],buzzer:['🔔','Buzzer','Local alarm']};
+
+/* ================== navigation ================== */
+const PAGES=[['dash','▦','Dashboard','Dashboard Overview','Live system snapshot'],['att','◈','RFID Attendance','RFID Attendance','RC522 reader · resident identification'],['ver','⇄','Entry Verification','RFID Entry Verification','HC-SR501 PIR confirms single vs. tailgated entry'],['env','☀','Environment','Environment','Temperature, humidity & gas safety'],['wat','≈','Water Level','Water Level','Overhead tank monitoring'],['sec','⛨','Security','Security','Door & corridor security'],['dev','⏻','Device Control','Device Control','Remote appliance control'],['ana','◱','Analytics','Analytics','Historical sensor and usage trends'],['alr','⚠','Alerts','Alerts','Critical event notifications'],['log','☰','Activity Log','Activity Log','Real-time event stream'],['sys','◉','System Status','System Status','Connectivity & MQTT'],['abt','ℹ','About Project','About Project','Smart Stay Hub overview']];
+$('#nav').innerHTML=PAGES.map(p=>`<a data-p="${p[0]}"><i>${p[1]}</i>${p[2]}${p[0]=='alr'?'<span class="cnt" id="cnt">0</span>':''}</a>`).join('');
+function go(id){
+  $$('section.page').forEach(s=>s.classList.toggle('on',s.id==='p-'+id));
+  $$('nav a').forEach(a=>a.classList.toggle('on',a.dataset.p===id));
+  const p=PAGES.find(x=>x[0]===id);$('#ttl').textContent=p[3];$('#tsub').textContent=p[4];
+  $('#side').classList.remove('open');
+  if(id==='ana')drawAna(); setTimeout(()=>{drawLive();drawEnv();drawWat();},50);
+  history.replaceState(null,'','#'+id);
+}
+$('#nav').addEventListener('click',e=>{const a=e.target.closest('a');if(a)go(a.dataset.p)});
+
+/* ================== 3D tilt + light follow ================== */
+document.addEventListener('mousemove',e=>{
+  const el=e.target.closest&&e.target.closest('.glass'); if(!el)return;
+  const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+  el.style.setProperty('--mx',x*100+'%');el.style.setProperty('--my',y*100+'%');
+  if(el.classList.contains('tilt')&&matchMedia('(hover:hover)').matches)
+    el.style.transform=`perspective(900px) rotateX(${(.5-y)*10}deg) rotateY(${(x-.5)*12}deg) translateZ(8px)`;
+});
+document.addEventListener('mouseout',e=>{const el=e.target.closest&&e.target.closest('.tilt');if(el)el.style.transform=''});
+
+/* ================== logging / alerts ================== */
+function log(msg,type='ok'){S.log.unshift({t:nowT(),msg,type});S.log.length=Math.min(S.log.length,80);renderLists()}
+function alertAdd(msg,type='bad'){S.alerts.unshift({t:nowT(),msg,type});S.alerts.length=Math.min(S.alerts.length,60);S.sec.unshift({t:nowT(),msg,type});S.sec.length=Math.min(S.sec.length,40);log('ALERT: '+msg,type);renderLists()}
+function connLog(m){const d=document.createElement('div');d.className='item';d.innerHTML=`<span>${esc(m)}</span><time>${nowT()}</time>`;$('#l-conn').prepend(d)}
+const li=a=>a.length?a.map(x=>`<div class="item ${x.type}"><span>${esc(x.msg)}</span><time>${x.t}</time></div>`).join(''):'<div class="item"><span style="color:var(--mut)">Nothing yet…</span></div>';
+function renderLists(){
+  $('#l-alerts-mini').innerHTML=li(S.alerts.slice(0,6));$('#l-alerts').innerHTML=li(S.alerts);
+  $('#l-log').innerHTML=li(S.log);$('#l-sec').innerHTML=li(S.sec);
+  $('#cnt').textContent=S.alerts.length;$('#cnt').style.display=S.alerts.length?'':'none';
+}
+
+/* ================== buzzer ================== */
+let ac=null,beepTimer=null,buzzStop=null;
+function beepStart(){
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();
+    let on=false;clearInterval(beepTimer);
+    beepTimer=setInterval(()=>{ if(!S.buzzer){clearInterval(beepTimer);return}
+      const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=on?1040:760;on=!on;g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.18)},260);
+  }catch(e){}
+}
+function setBuzzer(on,reason){
+  S.buzzer=on;$('#v-b').textContent=on?'🔔 ON':'OFF';$('#v-b').style.color=on?'var(--bad)':'';
+  $('#alarm').classList.toggle('on',on);S.dev.buzzer=on;renderDevs();
+  clearTimeout(buzzStop);
+  if(on){$('#alarmTxt').textContent=reason||'';beepStart();buzzStop=setTimeout(()=>stopBuzzer(),9000);}
+  pub('buzzer',on);
+}
+function stopBuzzer(){if(S.buzzer){setBuzzer(false);log('Buzzer silenced','warn')}}
+
+/* ================== RFID + PIR logic ================== */
+const steps=['s1','s2','s3','s4','s5'];
+function resetSteps(){steps.forEach(s=>$('#'+s).className='step')}
+function scan(force,fromMQTT){
+  if(S.busy&&!fromMQTT)return; S.busy=true;resetSteps();
+  let idx=Math.floor(Math.random()*RES.length),unk=false,name,uid;
+  if(fromMQTT){name=fromMQTT.name||'Unknown';uid=fromMQTT.uid||'—';unk=!fromMQTT.name;idx=RES.findIndex(r=>r[1]===uid)}
+  else if(!force&&Math.random()<.08){unk=true;name='Unknown Card';uid=Math.random().toString(16).slice(2,10).toUpperCase()}
+  else{[name,uid]=RES[idx]}
+  const persons=fromMQTT?(+fromMQTT.persons||1):(force||(Math.random()<.2?2:1));
+  const dir=(idx>=0&&S.present.has(idx))?'Exit':'Entry';
+  const t=nowT();
+  $('#v-u').textContent=name;$('#v-id').textContent=uid;$('#v-t').textContent=t;$('#v-n').textContent='…';
+  $('#verdict').className='verdict';$('#verdict').textContent='Scanning…';
+  const D=fromMQTT?50:600;
+  $('#s1').classList.add(unk?'no':'go');
+  setTimeout(()=>{ if(unk){
+      $('#verdict').className='verdict bad';$('#verdict').textContent='⛔ UNAUTHORIZED CARD — ACCESS DENIED';
+      S.scans++;S.att.unshift({n:name,id:uid,d:nowD(),t,dir:'Entry',ok:false});
+      alertAdd('Unauthorized RFID card '+uid,'bad');finish();return}
+    $('#s2').classList.add('go');setDoor(true);log(`${name} tapped RFID (${uid}) — door opened`,'ok');
+    setTimeout(()=>{ $('#s3').classList.add('go');S.pir=true;S.idle=0;updSec();
+      setTimeout(()=>{ $('#s4').classList.add(persons>1?'no':'go');$('#v-n').textContent=persons;
+        setTimeout(()=>{ const two=persons>1; $('#s5').classList.add(two?'no':'go');
+          S.scans++;S.ver.unshift({t,n:name,id:uid,p:persons,two});
+          S.att.unshift({n:name,id:uid,d:nowD(),t,dir,ok:true});
+          if(idx>=0){dir==='Entry'?S.present.add(idx):S.present.delete(idx)}
+          dir==='Entry'?S.entries++:S.exits++;
+          if(two){S.dbl++;S.tail++;
+            $('#verdict').className='verdict bad';$('#verdict').textContent=`🚨 DOUBLE ENTRY — ${persons} PERSONS ON ONE RFID TAP — BUZZER ON`;
+            alertAdd(`Tailgating! ${persons} persons entered with ${name}'s card`,'bad');
+            setBuzzer(true,`${persons} persons detected after a single RFID tap by ${name}`);
+          }else{S.single++;
+            $('#verdict').className='verdict';$('#verdict').textContent=`🟢 SINGLE ${dir.toUpperCase()} VERIFIED — ${name}`;
+            log(`${name} — single ${dir.toLowerCase()} verified`,'ok');}
+          finish();
+        },D);},D);},D);},D);
+  function finish(){setTimeout(()=>{setDoor(false);S.pir=false;updSec();S.busy=false;S.nextScan=Math.round(rnd(7,13));renderAll()},fromMQTT?500:1800);renderAll()}
+}
+function setDoor(o){
+  if(S.door===o)return;S.door=o;S.doorOpenTicks=0;
+  if(o){S.lastOpen=nowT()}else S.lastClose=nowT();updSec();
+}
+function updSec(){
+  $('#s-ic').textContent=S.door?'🔴':'🟢';$('#s-door').textContent=S.door?'DOOR OPEN':'DOOR CLOSED';
+  $('#s-lo').textContent=S.lastOpen;$('#s-lc').textContent=S.lastClose;$('#s-pir').textContent=S.pir?'🟠 Motion detected':'No motion';
+}
+
+/* ================== devices ================== */
+function renderDevs(){
+  $('#devs').innerHTML=NAMES.map(n=>`<div class="glass dev tilt"><div><b>${DEVMETA[n][0]} ${DEVMETA[n][1]}</b><small>${DEVMETA[n][2]}</small></div><div class="sw ${S.dev[n]?'on':''}" onclick="toggleDev('${n}')"></div></div>`).join('');
+}
+function toggleDev(n){
+  if(n==='buzzer'){S.dev.buzzer?stopBuzzer():setBuzzer(true,'Manual buzzer test');return}
+  S.dev[n]=!S.dev[n];renderDevs();log(`${DEVMETA[n][1]} turned ${S.dev[n]?'ON':'OFF'}`,'ok');pub(n,S.dev[n]);
+}
+function toggleAuto(){S.auto=!S.auto;$('#sw-auto').classList.toggle('on',S.auto);$('#autoTxt').textContent='Auto energy saving '+(S.auto?'ON':'OFF')}
+
+/* ================== sensors tick ================== */
+let gasSpike=0;
+function gasLeak(){gasSpike=8;log('Gas leak simulated','warn')}
+function tick(){
+  if(!S.live){
+    S.temp=clamp(S.temp+rnd(-.35,.35)+(S.dev.ac?-.25:.04),22,41);
+    S.hum=clamp(S.hum+rnd(-1.2,1.2),35,92);
+    if(gasSpike>0){S.gas=clamp(S.gas+rnd(70,130),0,900);gasSpike--}
+    else S.gas=clamp(S.gas+(180-S.gas)*.2+rnd(-14,14),90,900);
+    const drain=rnd(.1,.45);
+    S.tank=S.dev.pump?clamp(S.tank+2.5,0,100):clamp(S.tank-drain,0,100);
+    if(S.tank<20&&!S.dev.pump){S.dev.pump=true;renderDevs();alertAdd('Water tank below 20% — pump started automatically','warn')}
+    if(S.tank>=95&&S.dev.pump){S.dev.pump=false;renderDevs();log('Tank full — pump stopped','ok')}
+    S.nextScan--; if(S.nextScan<=0&&!S.busy&&!S.live)scan();
+  }
+  S.lastUpdate=Date.now();
+  // gas alarm
+  if(S.gas>400&&!S.gasAlert){S.gasAlert=true;alertAdd(`Gas danger: ${Math.round(S.gas)} ppm`,'bad');setBuzzer(true,'Gas / smoke level dangerous')}
+  if(S.gas<300&&S.gasAlert){S.gasAlert=false;log('Gas level back to safe','ok')}
+  // door left open
+  if(S.door&&!S.busy){S.doorOpenTicks++;if(S.doorOpenTicks===8)alertAdd('Door left open','warn')}
+  // PIR energy saving
+  S.idle++;
+  if(S.auto&&S.idle>20&&(S.dev.light||S.dev.fan)){S.dev.light=false;S.dev.fan=false;renderDevs();log('No corridor motion 40s — light & fan auto-OFF (energy saving)','warn')}
+  if(S.pir&&S.auto&&(!S.dev.light)){S.dev.light=true;renderDevs()}
+  const H=S.hist;H.t.push(S.temp);H.h.push(S.hum);H.g.push(S.gas);H.w.push(S.tank);
+  for(const k in H)if(H[k].length>60)H[k].shift();
+  renderAll();
+}
+function stat(v,warn,bad,okTxt='NORMAL'){return v>=bad?['DANGER','bad']:v>=warn?['HIGH','warn']:[okTxt,'ok']}
+function setSt(id,[txt,cls]){const e=$(id);e.textContent='Status: '+txt;e.className='st '+cls}
+function renderAll(){
+  const T=S.temp.toFixed(1),Hh=Math.round(S.hum),G=Math.round(S.gas),W=Math.round(S.tank);
+  const pr=S.base+S.present.size;
+  $('#d-t').textContent=$('#n-t').textContent=T;$('#d-h').textContent=$('#n-h').textContent=Hh;
+  $('#d-g').textContent=$('#n-g').textContent=G;$('#d-w').textContent=W;$('#d-wb').style.width=W+'%';
+  const ts=stat(S.temp,32,37),hs=stat(S.hum,75,88),gs=S.gas>=400?['DANGER','bad']:S.gas>=300?['WARNING','warn']:['SAFE','ok'];
+  ['#d-ts','#n-ts'].forEach(i=>setSt(i,ts));['#d-hs','#n-hs'].forEach(i=>setSt(i,hs));['#d-gs','#n-gs'].forEach(i=>setSt(i,gs));
+  $('#n-ga').textContent=S.gas>=400?'⚠ Gas danger!':'No active gas alerts';
+  $('#d-door').textContent=S.door?'🔴 OPEN':'🟢 CLOSED';$('#d-doort').textContent=S.pir?'PIR: motion':'PIR: idle';$('#d-doort').className='st '+(S.door?'bad':'ok');
+  $('#d-p').textContent=pr;$('#d-pe').textContent=S.busy?'Scan in progress…':'48 residents';
+  $('#a-p').textContent=pr;$('#a-a').textContent=48-pr;$('#a-e').textContent=S.entries;$('#a-x').textContent=S.exits;
+  $('#e-tot').textContent=S.scans;$('#e-s').textContent=S.single;$('#e-d').textContent=S.dbl;$('#e-a').textContent=S.tail;
+  $('#v-next').textContent=S.live?'live (ESP32)':(S.busy?'scanning…':S.nextScan+'s');
+  // water page
+  $('#tankFill').style.height=W+'%';$('#tankPct').textContent=W+'%';
+  const dist=((100-S.tank)*.6).toFixed(0);$('#w-d').textContent=dist+' cm';
+  $('#w-s').innerHTML=S.tank<20?'<span class="bad">LOW</span>':S.tank<40?'<span class="warn">MEDIUM</span>':'<span class="ok">NORMAL</span>';
+  $('#w-p').textContent=S.dev.pump?'RUNNING':'AUTO (idle)';$('#w-l').textContent='just now';
+  const dd=S.dev.pump||S.gas>400||S.dbl>0&&0; // keep header status
+  updSec();renderAtt();renderVer();drawLive();drawEnv();drawWat();
+}
+function renderAtt(){
+  const d=$('#f-dir').value,s=$('#f-st').value;
+  $('#t-att').innerHTML=S.att.filter(r=>(!d||r.dir===d)&&(!s||(r.ok?'Authorized':'Unauthorized')===s)).slice(0,60).map(r=>`<tr><td>${esc(r.n)}</td><td>${r.id}</td><td>${r.d}</td><td>${r.t}</td><td>${r.dir}</td><td><span class="tag ${r.ok?'ok':'bad'}">${r.ok?'Authorized':'Unauthorized'}</span></td></tr>`).join('');
+}
+function renderVer(){
+  $('#t-ver').innerHTML=S.ver.slice(0,60).map(r=>`<tr><td>${r.t}</td><td>${esc(r.n)}</td><td>${r.id}</td><td>${r.p}</td><td><span class="tag ${r.two?'bad':'ok'}">${r.two?'DOUBLE ENTRY':'SINGLE ENTRY'}</span></td></tr>`).join('');
+}
+setInterval(()=>{
+  $('#ago').textContent=Math.round((Date.now()-S.lastUpdate)/1000)+'s';
+  const u=Math.floor((Date.now()-S.t0)/1000);$('#y-u').textContent=u>=60?Math.floor(u/60)+'m '+u%60+'s':u+'s';
+},1000);
+
+/* ================== charts (no libraries) ================== */
+function setup(cv){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;if(!r.width)return null;cv.width=r.width*d;cv.height=r.height*d;const c=cv.getContext('2d');c.scale(d,d);return{c,w:r.width,h:r.height}}
+function lineChart(id,series,mn,mx){
+  const cv=document.getElementById(id);if(!cv||!cv.offsetParent)return;const o=setup(cv);if(!o)return;const{c,w,h}=o,L=34,B=22,T=10;
+  c.clearRect(0,0,w,h);c.font='11px Segoe UI';c.fillStyle='rgba(255,255,255,.6)';c.strokeStyle='rgba(255,255,255,.1)';
+  for(let i=0;i<=4;i++){const y=T+(h-T-B)*i/4;c.beginPath();c.moveTo(L,y);c.lineTo(w,y);c.stroke();c.fillText(Math.round(mx-(mx-mn)*i/4),2,y+4)}
+  series.forEach(s=>{const n=s.d.length;if(n<2)return;const X=i=>L+(w-L-6)*i/(n-1),Y=v=>T+(h-T-B)*(1-(v-mn)/(mx-mn));
+    c.beginPath();s.d.forEach((v,i)=>{i?c.lineTo(X(i),Y(clamp(v,mn,mx))):c.moveTo(X(i),Y(clamp(v,mn,mx)))});
+    c.lineWidth=2.5;c.strokeStyle=s.c;c.shadowColor=s.c;c.shadowBlur=12;c.stroke();c.shadowBlur=0;
+    c.lineTo(X(n-1),h-B);c.lineTo(X(0),h-B);const g=c.createLinearGradient(0,T,0,h);g.addColorStop(0,s.c+'55');g.addColorStop(1,s.c+'00');c.fillStyle=g;c.fill();c.fillStyle='rgba(255,255,255,.6)'});
+  let x=L;series.forEach(s=>{c.fillStyle=s.c;c.fillRect(x,h-12,10,4);c.fillStyle='rgba(255,255,255,.75)';c.fillText(s.n,x+14,h-6);x+=c.measureText(s.n).width+30});
+}
+function barChart(id,labels,series){
+  const cv=document.getElementById(id);if(!cv||!cv.offsetParent)return;const o=setup(cv);if(!o)return;const{c,w,h}=o,L=30,B=34,T=10;
+  const mx=Math.max(1,...series.flatMap(s=>s.d))*1.15;c.clearRect(0,0,w,h);c.font='11px Segoe UI';
+  c.strokeStyle='rgba(255,255,255,.1)';for(let i=0;i<=4;i++){const y=T+(h-T-B)*i/4;c.beginPath();c.moveTo(L,y);c.lineTo(w,y);c.stroke();c.fillStyle='rgba(255,255,255,.6)';c.fillText(Math.round(mx-mx*i/4),2,y+4)}
+  const n=labels.length,gw=(w-L)/n,bw=Math.max(3,gw/(series.length+1)-1);
+  labels.forEach((lb,i)=>{series.forEach((s,k)=>{const bh=(h-T-B)*s.d[i]/mx,x=L+i*gw+gw*.12+k*(bw+2),y=h-B-bh;
+    const g=c.createLinearGradient(0,y,0,h-B);g.addColorStop(0,s.c);g.addColorStop(1,s.c+'55');c.fillStyle=g;c.shadowColor=s.c;c.shadowBlur=8;
+    c.beginPath();c.roundRect?c.roundRect(x,y,bw,bh,3):c.rect(x,y,bw,bh);c.fill();c.shadowBlur=0});
+    if(n<=14||i%Math.ceil(n/12)===0){c.fillStyle='rgba(255,255,255,.6)';c.fillText(lb,L+i*gw+gw*.1,h-18)}});
+  let x=L;series.forEach(s=>{c.fillStyle=s.c;c.fillRect(x,h-9,10,5);c.fillStyle='rgba(255,255,255,.75)';c.fillText(s.n,x+14,h-4);x+=c.measureText(s.n).width+30});
+}
+const drawLive=()=>lineChart('c-live',[{n:'Temp °C',d:S.hist.t,c:'#ff9a5a'},{n:'Humidity %',d:S.hist.h,c:'#5ac8ff'},{n:'Gas ÷5',d:S.hist.g.map(v=>v/5),c:'#c084fc'}],0,100);
+const drawEnv=()=>lineChart('c-env',[{n:'Temp °C',d:S.hist.t,c:'#ff9a5a'},{n:'Humidity %',d:S.hist.h,c:'#5ac8ff'}],0,100);
+const drawWat=()=>lineChart('c-wat',[{n:'Water %',d:S.hist.w,c:'#4aa8ff'}],0,100);
+function drawAna(){
+  const n=+$('#rng').value,lab=Array.from({length:n},(_,i)=>$('#rng').selectedIndex===0?(i*5)+'m':$('#rng').selectedIndex===1?pad(i)+'h':'D'+(i+1));
+  const wave=(b,a,ph)=>Array.from({length:n},(_,i)=>b+a*Math.sin(i/n*6.28+ph)+rnd(-a/4,a/4));
+  lineChart('a1',[{n:'Temp °C',d:wave(29,4,0),c:'#ff9a5a'},{n:'Humidity %',d:wave(65,12,1),c:'#5ac8ff'}],0,100);
+  lineChart('a2',[{n:'Gas ÷5',d:wave(36,8,2).map(v=>Math.max(8,v)),c:'#c084fc'},{n:'Water %',d:wave(65,25,0),c:'#4aa8ff'}],0,100);
+  barChart('a3',lab,[{n:'Single',d:Array.from({length:n},()=>Math.round(rnd(4,22))),c:'#3ef2a8'},{n:'Double',d:Array.from({length:n},()=>Math.round(rnd(0,4))),c:'#ff5d73'}]);
+  barChart('a4',['AC','Light','Fan'],[{n:'Hours',d:[+(n*.25*rnd(.6,1)).toFixed(1),+(n*.6*rnd(.6,1)).toFixed(1),+(n*.5*rnd(.6,1)).toFixed(1)],c:'#7aa2ff'}]);
+}
+addEventListener('resize',()=>{drawLive();drawEnv();drawWat();if($('#p-ana').classList.contains('on'))drawAna()});
+
+/* ================== MQTT (real ESP32, optional) ================== */
+function pub(dev,state){ if(S.client&&S.client.connected){S.client.publish($('#topic').value+'/cmd',JSON.stringify({device:dev,state:state?1:0}))} }
+function connectMQTT(){
+  const go2=()=>{
+    const base=$('#topic').value.trim();connLog('Connecting to broker.hivemq.com…');
+    const c=mqtt.connect('wss://broker.hivemq.com:8884/mqtt',{clientId:'ssh_web_'+Math.random().toString(16).slice(2,8)});S.client=c;
+    c.on('connect',()=>{c.subscribe(base+'/#');S.live=true;$('#modePill').textContent='📡 LIVE MQTT';$('#y-m').textContent='🟢 CONNECTED';connLog('Connected. Subscribed to '+base+'/#');log('MQTT connected — live mode','ok')});
+    c.on('error',e=>connLog('Error: '+e.message));c.on('close',()=>connLog('Connection closed'));
+    c.on('message',(tp,m)=>{
+      let j;try{j=JSON.parse(m.toString())}catch(e){return}
+      if(tp.endsWith('/sensors')){
+        if(j.temp!=null)S.temp=+j.temp;if(j.hum!=null)S.hum=+j.hum;if(j.gas!=null)S.gas=+j.gas;
+        if(j.dist!=null)S.tank=clamp(100-(+j.dist/60*100),0,100);
+        if(j.door!=null)setDoor(!!+j.door);if(j.pir!=null){S.pir=!!+j.pir;if(S.pir)S.idle=0}
+        $('#espDot').className='dot';$('#espTxt').textContent='ESP32 ONLINE';tick();
+      }else if(tp.endsWith('/entry')){scan(null,j)}
+    });
+  };
+  if(window.mqtt)return go2();
+  const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js';s.onload=go2;s.onerror=()=>connLog('Could not load MQTT library (check internet)');document.head.appendChild(s);
+}
+function disconnectMQTT(){if(S.client){S.client.end();S.client=null}S.live=false;$('#modePill').textContent='⚙ SIMULATION';$('#y-m').textContent='🟡 SIMULATED';connLog('Back to simulation mode')}
+
+/* ================== init ================== */
+for(let i=0;i<30;i++){S.hist.t.push(S.temp+rnd(-1,1));S.hist.h.push(S.hum+rnd(-4,4));S.hist.g.push(S.gas+rnd(-20,20));S.hist.w.push(S.tank+i*.1)}
+renderDevs();renderLists();log('System started — ESP32 online','ok');connLog('Simulation mode active');
+tick();setInterval(tick,2000);
+go((location.hash||'#dash').slice(1).replace(/[^a-z]/g,'')||'dash');
+if(!PAGES.find(p=>p[0]===(location.hash||'').slice(1)))go('dash');
+</script>
+</body>
+</html>
+
+</body></html>
